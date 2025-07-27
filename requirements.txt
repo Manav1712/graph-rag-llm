@@ -1,0 +1,34 @@
+# Core LLM and RAG libraries
+openai>=1.3.8
+graphrag>=0.1.0          # The official Microsoft GraphRAG library
+sentence-transformers>=2.2.2
+lancedb>=0.3.3
+
+# Data manipulation
+pandas>=2.1.0
+pyarrow>=13.0.0
+
+# Community detection, graph operations (optional but useful)
+networkx>=3.1
+
+# Visualization (optional, for stretch goals)
+matplotlib>=3.7.0
+pyvis>=0.3.2
+
+# Utilities
+tiktoken>=0.5.1
+python-dotenv>=1.0.0
+loguru>=0.7.0
+
+# Jupyter notebook/lab environment
+notebook>=7.0.0
+jupyterlab>=4.0.0
+
+# For chunking
+langchain>=0.1.0
+
+streamlit>=1.39.0
+
+# Uncomment below if you use a local LLM via HuggingFace
+# transformers>=4.38.0
+# accelerate>=0.27.0
