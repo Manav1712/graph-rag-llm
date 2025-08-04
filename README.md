@@ -2,9 +2,9 @@
 
 ## Project Overview
 
-This project demonstrates the power of **Microsoft's GraphRAG framework** to transform traditional physics textbooks into an intelligent, queryable knowledge graph. We took OpenStax Physics 2e and College Algebra textbooks and created a sophisticated search system that can answer complex questions through three different search strategies.
+This project demonstrates the power of **Microsoft's GraphRAG framework** to transform traditional physics textbooks into an intelligent, queryable knowledge graph. The system takes OpenStax Physics 2e and College Algebra textbooks and creates a sophisticated search system that can answer complex questions through three different search strategies.
 
-### What We Built
+### What Was Built
 
 A **three-tier search system** that can answer questions about physics and mathematics with remarkable accuracy:
 
@@ -14,7 +14,7 @@ A **three-tier search system** that can answer questions about physics and mathe
 
 ### The Results Speak for Themselves
 
-Our system achieved an **average score of 7.2/10** across 45 evaluations, with some responses scoring as high as **9/10**. Here are some real examples of what our system can do:
+The system achieved an **average score of 7.2/10** across 45 evaluations, with some responses scoring as high as **9/10**. Here are some real examples of what the system can do:
 
 ## Sample Query Results
 
@@ -29,7 +29,7 @@ Our system achieved an **average score of 7.2/10** across 45 evaluations, with s
 ## Technical Architecture
 
 ### Knowledge Graph Construction
-Our system extracted **8 entities** and **24 relationships** from the physics textbooks, creating a rich knowledge graph that captures:
+The system extracted **90+ entities** and **98 relationships** from the physics textbooks, creating a rich knowledge graph that captures:
 
 - **Core Physics Concepts**: Vectors, scalar products, pressure, density
 - **Mathematical Relationships**: Orthogonal vectors, cross products
@@ -52,8 +52,8 @@ Our system extracted **8 entities** and **24 relationships** from the physics te
                     ┌─────────────────┐
                     │  Knowledge Graph│
                     │                 │
-                    │ • 8 Entities    │
-                    │ • 24 Relations  │
+                    │ • 90+ Entities  │
+                    │ • 98 Relations  │
                     │ • 156 Text Units│
                     └─────────────────┘
 ```
@@ -143,7 +143,7 @@ Open `http://localhost:8000/knowledge_graph.html` to explore your knowledge grap
 
 ## Evaluation Results
 
-Our system was evaluated across multiple dimensions:
+The system was evaluated across multiple dimensions:
 
 ### Overall Performance
 - **Average Score**: 7.2/10
@@ -254,10 +254,17 @@ For large documents (>1000 pages):
 
 ## Contributing
 
-We welcome contributions! Please contact us at **manav172022@gmail.com** to discuss potential contributions, feature requests, or collaboration opportunities.
+Contributions are welcome! Please contact **manav172022@gmail.com** to discuss potential contributions, feature requests, or collaboration opportunities.
 
 ### Development Setup
 
 ```bash
 # Install development dependencies
 pip install -r requirements-dev.txt
+```
+
+---
+
+**Ready to build your own intelligent knowledge graph?** Start with the installation guide above and transform your documents into a queryable knowledge base!
+
+For questions or support, please contact **manav172022@gmail.com**.
