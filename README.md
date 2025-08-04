@@ -64,7 +64,8 @@ Our system extracted **8 entities** and **24 relationships** from the physics te
 - Python 3.11+
 - OpenAI API key
 - 8GB+ RAM (for processing large documents)
-- 30GB+ disk space
+- Some disk space
+- Around $5 to replicate the KG with a corpus of ~300,000 words
 
 ### Step 1: Environment Setup
 
@@ -260,17 +261,3 @@ We welcome contributions! Please contact us at **manav172022@gmail.com** to disc
 ```bash
 # Install development dependencies
 pip install -r requirements-dev.txt
-
-# Run tests
-pytest tests/
-
-# Check code quality
-black src/
-flake8 src/
-```
-
----
-
-**Ready to build your own intelligent knowledge graph?** Start with the installation guide above and transform your documents into a queryable knowledge base!
-
-For questions or support, please contact us at manav172022@gmail.com. 
