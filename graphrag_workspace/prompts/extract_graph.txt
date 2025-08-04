@@ -1,0 +1,431 @@
+
+You are an expert in Physics, specializing in Mechanics and Network Science. You are skilled at understanding and applying the principles of force, motion, and energy to various physical systems. You are adept at helping people identify the relations and structure within the community of interest in the "Physics - Mechanics" domain, including the analysis of research trends, collaboration networks, and the development of theoretical models.
+-Goal-
+Given a text document that is potentially relevant to this activity and a list of entity types, identify all entities of those types from the text and all relationships among the identified entities.
+
+-Steps-
+1. Identify all entities. For each identified entity, extract the following information:
+- entity_name: Name of the entity, capitalized
+- entity_type: One of the following types: [concept, person, school of thought, technology, sectors, investment strategies, organization, physical system, physical property, physical law, mathematical model, measurement unit, physical quantity, scientific principle, research method, physical phenomenon, scientific theory, experimental technique, physical constant, scientific equipment]
+- entity_description: Comprehensive description of the entity's attributes and activities
+Format each entity as ("entity"{tuple_delimiter}<entity_name>{tuple_delimiter}<entity_type>{tuple_delimiter}<entity_description>)
+
+2. From the entities identified in step 1, identify all pairs of (source_entity, target_entity) that are *clearly related* to each other.
+For each pair of related entities, extract the following information:
+- source_entity: name of the source entity, as identified in step 1
+- target_entity: name of the target entity, as identified in step 1
+- relationship_description: explanation as to why you think the source entity and the target entity are related to each other
+- relationship_strength: an integer score between 1 to 10, indicating strength of the relationship between the source entity and target entity
+Format each relationship as ("relationship"{tuple_delimiter}<source_entity>{tuple_delimiter}<target_entity>{tuple_delimiter}<relationship_description>{tuple_delimiter}<relationship_strength>)
+
+3. Return output in English as a single list of all the entities and relationships identified in steps 1 and 2. Use **{record_delimiter}** as the list delimiter.
+
+4. If you have to translate into English, just translate the descriptions, nothing else!
+
+5. When finished, output {completion_delimiter}.
+
+In addition to the entity types, **ALWAYS extract the fundamental concepts of physics (e.g., ENERGY, MATTER, FORCE, MASS, MOMENTUM, WORK, POWER, LAW OF CONSERVATION, etc.) if they appear anywhere in the text, regardless of context.
+
+-Examples-
+######################
+
+Example 1:
+
+entity_types: [concept, person, school of thought, technology, sectors, investment strategies, organization, physical system, physical property, physical law, mathematical model, measurement unit, physical quantity, scientific principle, research method, physical phenomenon, scientific theory, experimental technique, physical constant, scientific equipment]
+text:
+ 
+of work by Yusuke Kawasaki) 
+
+
+The term deceleration can cause confusion in our analysis because it is not 
+a vector and it does not point to a specific direction with respect to a 
+coordinate system, so we do not use it. Acceleration is a vector, so we must 
+choose the appropriate sign for it in our chosen coordinate system. In the 
+case of the train in [link], acceleration is in the negative direction in the 
+chosen coordinate system, so we say the train is undergoing negative 
+acceleration. 
+
+
+If an object in motion has a velocity in the positive direction with respect to 
+a chosen origin and it acquires a constant negative acceleration, the object 
+
+
+eventually comes to a rest and reverses direction. If we wait long enough, 
+
+
+the object passes through the origin going in the opposite direction. This is 
+illustrated in [link]. 
+
+
+Vs Vo 
+OO (Y o-—_——__ 
+West Origin East 
+ee 
+a 
+
+
+An object in motion with a velocity vector toward the east under 
+negative acceleration comes to a rest and reverses direction. It passes 
+the origin going in the opposite direction after a long enough time. 
+
+
+Example: 
+Calculating Average Acceleration: A Racehorse Leaves the Gate 
+
+
+A racehorse coming out of the gate accelerates from rest to a velocity of 
+15.0 m/s due west in 1.80 s. What is its average acceleration? 
+
+
+Racehorses accelerating out of the gate. (credit: 
+modification of work by Jon Sullivan) 
+
+
+Strategy 
+
+First we draw a sketch and assign a coordinate system to the problem 
+[link]. This is a simple problem, but it always helps to visualize it. Notice 
+that we assign east as positive and west as negative. Thus, in this case, we 
+
+
+have negative velocity. 
+oS N (+y) 
+Vv; = —15.0 m/s Vo = 
+
+
+W (-x) E (+x) 
+a=? S (-y) 
+
+
+Identify the coordinate system, the given information, and what you 
+want to determine. 
+
+
+We can solve this problem by identifying Av and At from the given 
+information, and then calculating the average acceleration directly from the 
+
+
+equationa = 4% = ae 
+
+
+Solution 
+
+First, identify the knowns: vp = 0, vg = —15.0 m/s (the negative sign 
+indicates direction toward the west), At = 1.80 s. 
+
+Second, find the change in velocity. Since the horse is going from zero to — 
+15.0 m/s, its change in velocity equals its final velocity: 
+
+Equation: 
+
+
+Av = v¢ — Up = Up = —15.0 m/s. 
+
+
+Last, substitute the known values (Av and At) and solve for the unknown 
+i: 
+Equation: 
+
+
+Significance 
+
+The negative sign for acceleration indicates that acceleration is toward the 
+west. An acceleration of 8.33 m/s” due west means the horse increases its 
+velocity by 8.33 m/s due west each second; that is, 8.33 meters per second 
+per second, which we write as 8.33 m/s’. This is truly an average 
+acceleration, because the ride is not smooth. We see later that an 
+acceleration of this magnitude would require the rider to hang on with a 
+force nearly equal to his weight. 
+
+
+Note: 
+Exercise: 
+
+
+Problem: 
+
+
+Check Your Understanding Protons in a linear accelerator are 
+accelerated from rest to 2.0 x 10’ m/s in 10“ s. What is the average 
+acceleration of the protons? 
+
+
+Solution: 
+
+
+Inserting the knowns, we have 
+
+
+~ Ay _ 2.0x10"m/s—0 __ 11 2 
+a = ee m/s’. 
+
+
+Instantaneous Acceleration 
+
+
+Instantaneous acceleration a, or acceleration at a specific instant in time, is 
+obtained using the same process discussed for instantaneous velocity. That 
+is, we calculate the average acceleration between two points in time 
+separated by Aé and let At approach zero. The result is the derivative of 
+the velocity function v(t), which is instantaneous acceleration and is 
+expressed mathematically as 
+
+
+Note: 
+Equation: 
+
+
+Thus, similar to velocity being the derivative of the position function, 
+instantaneous acceleration is the derivative of the velocity function. We can 
+show this graphically in the same way as instantaneous velocity. In [link], 
+instantaneous acceleration at time fo is the slope of the tangent line to the 
+velocity-versus-time graph at time tp. We see that average acceleration 
+
+a= Me approaches instantaneous acceleration as At approaches zero. 
+
+
+Also in part (a) of the figure, we see that velocity has a maximum when its 
+slope is zero. This time corresponds to the zero of the acceleration function. 
+In part (b), instantaneous acceleration at the minimum velocity is shown, 
+which is also zero, since the slope of the curve is zero there, too. Thus, for a 
+given velocity function, the zeros of the acceleration function give either 
+the minimum or the maximum velocity. 
+
+
+a(tg) = slope of tangent line a(ty) = slope of tangent line 
+
+
+Velocity 
+
+
+In a graph of velocity versus time, instantaneous acceleration is the 
+slope of the tangent line. (a) Shown is average acceleration 
+= Av UE—Uj 
+
+
+= A = Get between times At = tg — t, At = ts — te, and 
+
+
+At = t4 — t3. When At —> 0, the average acceleration approaches 
+instantaneous acceleration at time to. In view (a), instantaneous 
+acceleration is shown for the point on the velocity curve at maximum 
+
+------------------------
+output:
+("entity"{tuple_delimiter}DECELERATION{tuple_delimiter}CONCEPT{tuple_delimiter}Deceleration is often misunderstood because it is not a vector and does not specify a direction in a coordinate system, hence it is not used in precise physics discussions. Instead, negative acceleration is used to indicate deceleration.){record_delimiter}
+("entity"{tuple_delimiter}ACCELERATION{tuple_delimiter}PHYSICAL QUANTITY{tuple_delimiter}Acceleration is a vector quantity that specifies the rate of change of velocity of an object with respect to time. It has both magnitude and direction.){record_delimiter}
+("entity"{tuple_delimiter}VELOCITY{tuple_delimiter}PHYSICAL QUANTITY{tuple_delimiter}Velocity is a vector quantity that represents the rate of change of position of an object with respect to time. It has both magnitude and direction.){record_delimiter}
+("entity"{tuple_delimiter}AVERAGE ACCELERATION{tuple_delimiter}CONCEPT{tuple_delimiter}Average acceleration is calculated as the change in velocity divided by the time over which the change occurs. It is a measure of how quickly an object's velocity changes.){record_delimiter}
+("entity"{tuple_delimiter}INSTANTANEOUS ACCELERATION{tuple_delimiter}CONCEPT{tuple_delimiter}Instantaneous acceleration is the acceleration of an object at a specific moment in time. It is obtained by taking the derivative of the velocity function with respect to time.){record_delimiter}
+("entity"{tuple_delimiter}LINEAR ACCELERATOR{tuple_delimiter}SCIENTIFIC EQUIPMENT{tuple_delimiter}A linear accelerator is a device that accelerates charged particles, such as protons, to high speeds in a straight line.){record_delimiter}
+("relationship"{tuple_delimiter}DECELERATION{tuple_delimiter}ACCELERATION{tuple_delimiter}Deceleration is conceptually related to acceleration but specifically refers to a decrease in velocity, which is represented by negative acceleration in physics.{tuple_delimiter}10){record_delimiter}
+("relationship"{tuple_delimiter}ACCELERATION{tuple_delimiter}VELOCITY{tuple_delimiter}Acceleration is directly related to velocity as it measures the rate of change of velocity over time.{tuple_delimiter}10){record_delimiter}
+("relationship"{tuple_delimiter}AVERAGE ACCELERATION{tuple_delimiter}ACCELERATION{tuple_delimiter}Average acceleration is a specific calculation of acceleration over a finite time interval.{tuple_delimiter}9){record_delimiter}
+("relationship"{tuple_delimiter}INSTANTANEOUS ACCELERATION{tuple_delimiter}ACCELERATION{tuple_delimiter}Instantaneous acceleration is a specific type of acceleration that occurs at a particular moment, derived from the general concept of acceleration.{tuple_delimiter}9){record_delimiter}
+("relationship"{tuple_delimiter}INSTANTANEOUS ACCELERATION{tuple_delimiter}AVERAGE ACCELERATION{tuple_delimiter}Instantaneous acceleration can be considered as the limit of average acceleration as the time interval approaches zero.{tuple_delimiter}8){record_delimiter}
+("relationship"{tuple_delimiter}LINEAR ACCELERATOR{tuple_delimiter}ACCELERATION{tuple_delimiter}A linear accelerator is designed to increase the acceleration of charged particles to high speeds.{tuple_delimiter}7){completion_delimiter}
+#############################
+
+
+Example 2:
+
+entity_types: [concept, person, school of thought, technology, sectors, investment strategies, organization, physical system, physical property, physical law, mathematical model, measurement unit, physical quantity, scientific principle, research method, physical phenomenon, scientific theory, experimental technique, physical constant, scientific equipment]
+text:
+: 
+Two figure skaters are coasting in the same direction, with the leading 
+skater moving at 5.5 m/s and the trailing skating moving at 6.2 m/s. When 
+the trailing skater catches up with the leading skater, he picks her up 
+without applying any horizontal forces on his skates. If the trailing skater is 
+
+
+50% heavier than the 50-kg leading skater, what is their speed after he picks 
+her up? 
+
+
+Solution: 
+
+
+5.9 m/s 
+
+
+Exercise: 
+
+
+Problem: 
+
+
+A 2000-kg railway freight car coasts at 4.4 m/s underneath a grain terminal, 
+which dumps grain directly down into the freight car. If the speed of the 
+loaded freight car must not go below 3.0 m/s, what is the maximum mass of 
+grain that it can accept? 
+
+
+Glossary 
+
+
+closed system 
+system for which the mass is constant and the net external force on the 
+system is zero 
+
+
+Law of Conservation of Momentum 
+total momentum of a closed system cannot change 
+
+
+system 
+object or collection of objects whose motion is currently under 
+investigation; however, your system is defined at the start of the problem, 
+you must keep that definition for the entire problem 
+
+
+Types of Collisions 
+By the end of this section, you will be able to: 
+
+
+e Identify the type of collision 
+
+e Correctly label a collision as elastic or inelastic 
+
+e Use kinetic energy along with momentum and impulse to analyze a 
+collision 
+
+
+Although momentum is conserved in all interactions, not all interactions 
+(collisions or explosions) are the same. The possibilities include: 
+
+
+e A single object can explode into multiple objects (one-to-many). 
+
+¢ Multiple objects can collide and stick together, forming a single object 
+(many-to-one). 
+
+¢ Multiple objects can collide and bounce off of each other, remaining as 
+multiple objects (many-to-many). If they do bounce off each other, 
+then they may recoil at the same speeds with which they approached 
+each other before the collision, or they may move off more slowly. 
+
+
+It’s useful, therefore, to categorize different types of interactions, according 
+to how the interacting objects move before and after the interaction. 
+
+
+One-to-Many 
+
+
+The first possibility is that a single object may break apart into two or more 
+pieces. An example of this is a firecracker, or a bow and arrow, or a rocket 
+rising through the air toward space. These can be difficult to analyze if the 
+number of fragments after the collision is more than about three or four; but 
+nevertheless, the total momentum of the system before and after the 
+explosion is identical. 
+
+
+Note that if the object is initially motionless, then the system (which is just 
+the object) has no momentum and no kinetic energy. After the explosion, 
+the net momentum of all the pieces of the object must sum to zero (since the 
+momentum of this closed system cannot change). However, the system will 
+have a great deal of kinetic energy after the explosion, although it had none 
+before. Thus, we see that, although the momentum of the system is 
+
+
+conserved in an explosion, the kinetic energy of the system most definitely 
+is not; it increases. This interaction—one object becoming many, with an 
+increase of kinetic energy of the system—is called an explosion. 
+
+
+Where does the energy come from? Does conservation of energy still hold? 
+Yes; some form of potential energy is converted to kinetic energy. In the 
+case of gunpowder burning and pushing out a bullet, chemical potential 
+energy is converted to kinetic energy of the bullet, and of the recoiling gun. 
+For a bow and arrow, it is elastic potential energy in the bowstring. 
+
+
+Many-to-One 
+
+
+The second possibility is the reverse: that two or more objects collide with 
+each other and stick together, thus (after the collision) forming one single 
+composite object. The total mass of this composite object is the sum of the 
+masses of the original objects, and the new single object moves with a 
+velocity dictated by the conservation of momentum. However, it turns out 
+again that, although the total momentum of the system of objects remains 
+constant, the kinetic energy doesn’t; but this time, the kinetic energy 
+decreases. This type of collision is called inelastic. 
+
+
+In the extreme case, multiple objects collide, stick together, and remain 
+motionless after the collision. Since the objects are all motionless after the 
+collision, the final kinetic energy is also zero; the loss of kinetic energy is a 
+maximum. Such a collision is said to be perfectly inelastic. 
+
+
+Many-to-Many 
+
+
+The extreme case on the other end is if two or more objects approach each 
+other, collide, and bounce off each other, moving away from each other at 
+the same relative speed at which they approached each other. In this case, 
+the total kinetic energy of the system is conserved. Such an interaction is 
+called elastic. 
+
+
+In any interaction of a closed system of objects, the total momentum of the 
+system is conserved (py = pj) but the kinetic energy may not be: 
+
+
+e If0 < K¢ < K;j, the collision is inelastic. 
+
+e If A; = 0, the collision is perfectly inelastic. 
+e If Kk, = K;, the collision is elastic. 
+
+e If As > K;, the interaction is an explosion. 
+
+
+The point of all this is that, in analyzing a collision or explosion, you can 
+use both momentum and kinetic energy. 
+
+
+Note: 
+
+Problem-Solving Strategy: Collisions 
+
+A closed system always conserves momentum; it might also conserve 
+kinetic energy, but
+------------------------
+output:
+("entity"{tuple_delimiter}CLOSED SYSTEM{tuple_delimiter}CONCEPT{tuple_delimiter}A system for which the mass is constant and the net external force on the system is zero)
+{record_delimiter}
+("entity"{tuple_delimiter}LAW OF CONSERVATION OF MOMENTUM{tuple_delimiter}PHYSICAL LAW{tuple_delimiter}States that the total momentum of a closed system cannot change)
+{record_delimiter}
+("entity"{tuple_delimiter}SYSTEM{tuple_delimiter}CONCEPT{tuple_delimiter}An object or collection of objects whose motion is currently under investigation; defined at the start of the problem and kept constant throughout the analysis)
+{record_delimiter}
+("entity"{tuple_delimiter}TYPES OF COLLISIONS{tuple_delimiter}CONCEPT{tuple_delimiter}Categorization of interactions according to how the interacting objects move before and after the interaction, including one-to-many, many-to-one, and many-to-many collisions)
+{record_delimiter}
+("entity"{tuple_delimiter}ELASTIC COLLISION{tuple_delimiter}PHYSICAL PHENOMENON{tuple_delimiter}A type of collision where the total kinetic energy of the system is conserved post-collision})
+{record_delimiter}
+("entity"{tuple_delimiter}INELASTIC COLLISION{tuple_delimiter}PHYSICAL PHENOMENON{tuple_delimiter}A collision in which the total kinetic energy of the system decreases post-collision})
+{record_delimiter}
+("entity"{tuple_delimiter}PERFECTLY INELASTIC COLLISION{tuple_delimiter}PHYSICAL PHENOMENON{tuple_delimiter}An extreme case of inelastic collision where the colliding objects stick together and remain motionless post-collision, resulting in maximum loss of kinetic energy})
+{record_delimiter}
+("entity"{tuple_delimiter}EXPLOSION{tuple_delimiter}PHYSICAL PHENOMENON{tuple_delimiter}An interaction where one object becomes many, with an increase of kinetic energy of the system})
+{record_delimiter}
+("relationship"{tuple_delimiter}CLOSED SYSTEM{tuple_delimiter}LAW OF CONSERVATION OF MOMENTUM{tuple_delimiter}The Law of Conservation of Momentum applies to closed systems where the mass and net external force are constant{tuple_delimiter}10)
+{record_delimiter}
+("relationship"{tuple_delimiter}TYPES OF COLLISIONS{tuple_delimiter}ELASTIC COLLISION{tuple_delimiter}Elastic collision is a category within the types of collisions where kinetic energy is conserved{tuple_delimiter}8)
+{record_delimiter}
+("relationship"{tuple_delimiter}TYPES OF COLLISIONS{tuple_delimiter}INELASTIC COLLISION{tuple_delimiter}Inelastic collision is a category within the types of collisions where kinetic energy decreases{tuple_delimiter}8)
+{record_delimiter}
+("relationship"{tuple_delimiter}TYPES OF COLLISIONS{tuple_delimiter}PERFECTLY INELASTIC COLLISION{tuple_delimiter}Perfectly inelastic collision is an extreme case within the types of collisions leading to maximum kinetic energy loss{tuple_delimiter}8)
+{record_delimiter}
+("relationship"{tuple_delimiter}TYPES OF COLLISIONS{tuple_delimiter}EXPLOSION{tuple_delimiter}Explosion is considered a reverse scenario within the types of collisions, characterized by an increase in kinetic energy{tuple_delimiter}8)
+{completion_delimiter}
+#############################
+
+
+
+-Real Data-
+######################
+entity_types: [concept, person, school of thought, technology, sectors, investment strategies, organization, physical system, physical property, physical law, mathematical model, measurement unit, physical quantity, scientific principle, research method, physical phenomenon, scientific theory, experimental technique, physical constant, scientific equipment]
+text: {input_text}
+######################
+output:

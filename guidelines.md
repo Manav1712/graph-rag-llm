@@ -1,364 +1,167 @@
-# GraphRAG QA System Implementation Guide
-## Two Implementation Approaches
+GraphRAG QA System: Single-Agent Implementation Guide
+Overview
+Goal:
+Develop a robust QA system over Physics 2e and College Algebra content using Microsoft’s GraphRAG. The system uses a single, intelligent agent that leverages both knowledge graph reasoning (GraphRAG) and baseline vector retrieval (Vector RAG), dynamically selecting the best method to answer each user query.
 
----
+Highlights:
 
-## Table of Contents
+Single-agent design: All query handling, retrieval, and response generation is encapsulated in one agent for simplicity and extensibility.
 
-### [PART 1: FULL TWO-AGENT SYSTEM](#part-1-full-two-agent-system)
-1. [Project Purpose & Overview](#project-purpose--overview)
-2. [System Requirements & Setup](#system-requirements--setup)
-3. [Repository Structure & Conventions](#repository-structure--conventions)
-4. [Key Concepts: RAG, Knowledge Graphs, Community Detection, Agents](#key-concepts)
-5. [End-to-End Pipeline: Overview](#end-to-end-pipeline-overview)
-6. [Phase 1: Environment, Data, and Preprocessing](#phase-1-environment-data-and-preprocessing-1–15-h)
-7. [Phase 2: Knowledge Graph Construction & Community Detection](#phase-2-knowledge-graph-construction--community-detection-2–25-h)
-8. [Phase 3: Community Summarization](#phase-3-community-summarization-1-h)
-9. [Phase 4: Baseline Vector RAG Implementation](#phase-4-baseline-vector-rag-implementation-05–1-h)
-10. [Phase 5: Global GraphRAG Search Implementation](#phase-5-global-graphrag-search-implementation-15–2-h)
-11. [Phase 6: Orchestrator Agent Logic](#phase-6-orchestrator-agent-logic-05–1-h)
-12. [Phase 7: Evaluation Harness](#phase-7-evaluation-harness-2–25-h)
-13. [Phase 8: Logging, Cost Tracking, and Basic Guardrails](#phase-8-logging-cost-tracking-and-basic-guardrails-05-h)
-14. [Phase 9: Visualization (Optional/Stretch)](#phase-9-visualization-optionalstretch-05–1-h)
-15. [Phase 10: Packaging, Documentation, and Next Steps](#phase-10-packaging-documentation-and-next-steps-05–1-h)
-16. [Time Estimates, Tips, and Pitfalls](#time-estimates-tips-and-pitfalls)
+Emphasis on knowledge graph quality: Strong focus on entity extraction, graph construction, and meaningful community detection.
 
-### [PART 2: SIMPLIFIED SINGLE-AGENT SYSTEM](#part-2-simplified-single-agent-system)
-1. [Simplified Project Overview](#simplified-project-overview)
-2. [Simplified System Requirements](#simplified-system-requirements)
-3. [Simplified Repository Structure](#simplified-repository-structure)
-4. [Simplified Implementation Phases](#simplified-implementation-phases)
-5. [Simplified Time Estimates](#simplified-time-estimates)
+Automatic routing: The agent decides when to use GraphRAG (for complex, cross-cutting questions) or baseline Vector RAG (for local, factoid queries).
 
----
+Modular codebase: Each step (chunking, extraction, graph building, search, evaluation) is cleanly separated for future extension.
 
-# PART 1: FULL TWO-AGENT SYSTEM
+Table of Contents
+Project Purpose & Deliverables
 
-## 1. Project Purpose & Overview
+System Requirements
 
-**Goal:**  
-- Build a modular, reproducible QA system over Physics 2e and College Algebra content, leveraging state-of-the-art GraphRAG (Graph-augmented Retrieval-Augmented Generation) and agent orchestration.
-- Demonstrate rapid adoption of advanced retrieval, automatic knowledge graph construction, and agent workflows by comparing global, community-based retrieval against vanilla vector-based RAG for both local and synthesis-style queries.
+Repository Structure
 
-**Deliverable:**  
-- Modular Python project (not just a single notebook)
-- Runs start-to-finish in ≤ 16 hours
-- Documents all decisions and enables future extension
+Key Concepts
 
----
+Implementation Phases & Time Estimates
 
-## 2. System Requirements & Setup
+Example Agent Logic
 
-**Hardware:**  
-- Standard laptop or cloud VM (≥8 GB RAM, ≥30 GB disk)
-- (Optional) GPU for faster embedding, not essential
+Key Simplifications & Focus Areas
 
-**Software/Dependencies:**  
-- Python 3.10+
-- `openai` (OpenAI Python SDK)
-- `graphrag` (GraphRAG official OSS library)
-- `sentence-transformers`
-- `lancedb`
-- `pandas`, `pyarrow`
-- `networkx` (optional, for visualization)
-- `matplotlib`, `pyvis` (optional)
-- `langchain` or similar for chunking
-- `tiktoken`
-- `python-dotenv`
-- `loguru`
-- (Optional) `graspologic` (if hand-running Leiden)
-- `jupyterlab` or `notebook`
-- `pytest` (optional, for unit testing)
+1. Project Purpose & Deliverables
+Purpose:
+Build a QA system capable of complex and local reasoning over large, private text corpora using a single, LLM-powered agent and a knowledge graph foundation.
 
-**External Resources:**  
-- OpenAI API key
-- Downloaded PDFs of OpenStax Physics 2e and College Algebra
-- (Optional) HuggingFace account if using a local LLM
+Deliverables:
 
-**Environment setup:**
-```bash
-# Clone the project repo
-git clone <repo_url>
-cd <project_root>
+Working Python project (notebook/demo optional, not required)
 
-# Create and activate a virtual environment
-python -m venv .venv
-source .venv/bin/activate
+End-to-end pipeline: indexing, graph construction, querying
 
-# Install requirements
-pip install -r requirements.txt
-```
+Clear code structure for chunking, graph-building, searching, and agent logic
 
-## 3. Repository Structure & Conventions
+Basic comparison between GraphRAG and baseline vector search
 
-```
+Ready for further extension (e.g., visualization, evaluation harness)
+
+2. System Requirements
+Hardware:
+
+Standard laptop or cloud VM (≥8 GB RAM, ≥30 GB disk)
+
+Software/Dependencies:
+
+Python 3.10+
+
+openai (OpenAI Python SDK)
+
+graphrag (GraphRAG OSS library)
+
+sentence-transformers
+
+lancedb
+
+pandas, pyarrow
+
+networkx
+
+langchain or similar for chunking
+
+tiktoken
+
+python-dotenv
+
+loguru
+
+External Resources:
+
+OpenAI API key
+
+PDFs of OpenStax Physics 2e and College Algebra
+
+3. Repository Structure
+bash
+Copy
+Edit
 project_root/
   src/
     indexer.py          # Chunking, extraction, graph, community detection
-    summarizer.py       # Community summary LLM calls
-    vector_rag.py       # Baseline embedding-based retrieval
-    graph_rag.py        # GraphRAG global search and interfaces
-    agent.py            # Orchestrator (routes queries to search mode)
-    eval.py             # LLM-as-judge, table output, metrics
-    utils.py            # Logging, token counting, helper functions
+    graph_rag.py        # GraphRAG search implementation
+    vector_rag.py       # Baseline vector RAG
+    agent.py            # Single agent with routing logic
+    utils.py            # Logging, helper functions
   data/
     raw/                # PDFs, source docs
     chunks/             # Preprocessed text chunks
-    kg/                 # Parquet or .gpickle graph files
+    kg/                 # Knowledge graph files
     communities/        # Community assignment, summaries
     vector_db/          # LanceDB index files
-    outputs/            # Query results, evaluation logs
+    outputs/            # Query results
   config/
-    settings.yaml       # Model names, token budgets, chunk size
-    prompts/            # YAML/text prompt templates
+    settings.yaml       # Model names, token budgets
+    prompts/            # Prompt templates
   notebooks/
-    demo.ipynb          # Top-level workflow for testing
-  docs/
-    architecture.png    # System/data flow diagram
-    README.md           # Project overview, quickstart
+    demo.ipynb          # Demo workflow (optional)
   requirements.txt
   .env.example
-```
+4. Key Concepts
+RAG (Retrieval-Augmented Generation): Uses embeddings to retrieve relevant chunks for LLM QA.
 
-All module imports are relative (e.g., from src.indexer import ...)
+Knowledge Graphs: Nodes = entities/concepts; Edges = relationships.
 
-Data artifacts versioned if small, otherwise .gitignore large outputs
+Community Detection (Leiden): Partitions graph into meaningful clusters (“themes”) for scalable summarization and retrieval.
 
-README.md contains step-by-step quickstart and troubleshooting
+Single Agent: All reasoning, routing, and response generation in one agent class.
 
-## 4. Key Concepts: RAG, Knowledge Graphs, Community Detection, Agents
+5. Implementation Phases & Time Estimates
+Phase	Estimate	Focus Area
+Knowledge Graph	4 h	Entity extraction, graph building, communities (PRIMARY FOCUS)
+Vector RAG Baseline	1 h	Embedding-based retrieval (baseline)
+GraphRAG Search	2 h	Global search, knowledge graph use
+Single Agent Logic	2 h	Agent with dynamic routing
+Demo & Testing	1 h	End-to-end validation
 
-**RAG (Retrieval-Augmented Generation)**
-Uses embedding-based similarity to pull context for LLM question-answering
+Total: 10 hours
 
-Baseline: split docs → embed → store → retrieve via nearest neighbors
+6. Example Agent Logic
+python
+Copy
+Edit
+class GraphRAGAgent:
+    def __init__(self):
+        self.vector_rag = VectorRAG()
+        self.graph_rag = GraphRAG()
+        self.knowledge_graph = KnowledgeGraph()
 
-**Knowledge Graphs (KG)**
-Graph where nodes = entities/concepts, edges = relationships
-
-Built from LLM extraction prompts or hand-curation
-
-**Community Detection (Leiden)**
-Partition graph into "communities" of closely connected nodes
-
-In GraphRAG, used for scalable, hierarchical summarization and retrieval
-
-**Agents**
-Modular "workers" (Python classes or scripts) that handle specific tasks
-
-For this project:
-- Indexer Agent: offline, builds graph/summaries
-- Query Orchestrator Agent: online, routes queries and composes final answer
-
-## 5. End-to-End Pipeline: Overview
-
-**Indexing/Offline:**
-- Chunk PDFs
-- Extract entities & relationships via LLM
-- Build and persist KG
-- Detect communities (Leiden, level 0; multi-level stretch)
-- Summarize each community using LLM
-
-**Online/Query-time:**
-- Receive user query
-- Orchestrator Agent decides on baseline or GraphRAG
-- Run search (vector, global)
-- Generate answer with citations
-- (Optional) LLM-based evaluation of answer quality
-
-## 6. Phase 1: Environment, Data, and Preprocessing (1–1.5 h)
-
-Get OpenAI API key, save to .env
-
-Download PDFs, save to data/raw/
-
-Chunk PDFs
-
-Use langchain.text_splitter or a custom chunker
-
-Target: 600 tokens/chunk, 100 token overlap
-
-Save chunks to data/chunks/physics.parquet etc.
-
-**Tips:**
-- Remove tables/images for cleaner input
-- Store metadata (source file, page number, section)
-
-**Code sketch:**
-```python
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-
-def chunk_pdf(pdf_path, out_path, chunk_size=600, overlap=100):
-    # Load, preprocess, split, and save to Parquet
-    ...
-```
-
-## 7. Phase 2: Knowledge Graph Construction & Community Detection (2–2.5 h)
-
-**Entity/Relationship Extraction**
-
-For each chunk, LLM prompt:
-"Extract all physics concepts, entities, formulas, relationships, and units in JSON triples."
-
-Aggregate results into a node/edge table
-
-**KG Assembly**
-
-Build a directed graph (in-memory or write directly to Parquet)
-
-Schema:
-- Nodes: entity_id, name, type, source_chunk
-- Edges: source_entity, target_entity, relation, evidence_chunk
-
-**Community Detection**
-
-Use graphrag API:
-```python
-graphrag.index.build_index(chunks=..., out_dir=...)
-```
-
-Save community membership to Parquet (data/communities/)
-
-## 8. Phase 3: Community Summarization (1 h)
-
-For each community, generate a "community report" with a single LLM call:
-"Summarize the following community of physics entities, listing all key relationships and claims..."
-
-Save summaries to Parquet:
-- community_id, summary_text, level, nodes_included
-
-This step is fully automated in graphrag, or you can manually call GPT-4 for a few communities as a fallback.
-
-## 9. Phase 4: Baseline Vector RAG Implementation (0.5–1 h)
-
-Embed all text chunks
-
-Use sentence-transformers/all-MiniLM-L6-v2 for fast, cheap embeddings
-
-Save to LanceDB index in data/vector_db/
-
-**Search Function**
-
-Given a query, embed and retrieve top-k chunks via similarity
-
-Pass to GPT-4 with a simple QA prompt:
-"Answer this question using only the provided context. Cite all supporting text."
-
-## 10. Phase 5: Global GraphRAG Search Implementation (1.5–2 h)
-
-**Search Function**
-
-Given a query, load all (or selected) community summaries (from Parquet)
-
-Shuffle or batch summaries for diversity
-
-Use map-reduce pattern:
-- Map: LLM answers Q for each summary, rates confidence/relevance
-- Reduce: aggregate top-scoring snippets, feed to LLM for synthesis
-
-**graphrag API**
-```python
-graphrag.query.global_search(query=..., summaries=..., config=...)
-```
-
-Set token limits and concurrency in config/settings.yaml
-
-Capture all intermediate LLM outputs for logging and debugging
-
-## 11. Phase 6: Orchestrator Agent Logic (0.5–1 h)
-
-**Heuristic:**
-
-If query length >12 or contains "summarize/compare/explain", route to GraphRAG global search
-
-Else, use baseline vector RAG
-
-**Class skeleton:**
-```python
-class OrchestratorAgent:
-    def __init__(self, ...):
-        ...
-    def route_query(self, query):
-        if self.is_global_query(query):
-            return self.graphrag_global(query)
+    def answer_query(self, query):
+        if self.is_complex_query(query):
+            return self.graph_rag.search(query)
         else:
-            return self.vector_baseline(query)
-```
+            return self.vector_rag.search(query)
 
-**Logging:**
+    def is_complex_query(self, query):
+        # Simple heuristics (customize as needed)
+        return len(query.split()) > 10 or any(word in query.lower() 
+                for word in ['compare', 'explain', 'summarize', 'relationship'])
+                
+7. Key Simplifications & Focus Areas
+No multi-agent orchestration: Only a single agent, no manager/worker/hand-off logic.
 
-Log which path was chosen and why, for every query
+Evaluation harness, advanced guardrails, and visualization are optional/future work.
 
-## 12. Phase 7: Evaluation Harness (2–2.5 h)
+Main focus:
 
-LLM-as-judge evaluation
+High-quality, robust knowledge graph (entity/relationship extraction, validation)
 
-Compare GraphRAG vs vector RAG performance
+Meaningful community detection and summaries
 
-Generate metrics and tables
+Working global GraphRAG search integrated with the agent
 
-## 13. Phase 8: Logging, Cost Tracking, and Basic Guardrails (0.5 h)
+Simple, effective agent routing logic
 
-Implement comprehensive logging
+In summary:
+You are delivering a single-agent, graph-based RAG QA system with robust KG extraction and community structure. The agent dynamically chooses between GraphRAG and baseline RAG, making the system simple, transparent, and easy to extend.
 
-Track API costs
-
-Add basic input validation
-
-## 14. Phase 9: Visualization (Optional/Stretch, 0.5–1 h)
-
-**Graph Visualization**
-
-Use networkx and matplotlib to draw communities
-
-Highlight nodes/edges cited in top answers
-
-**Community Structure**
-
-Plot histogram of community sizes
-
-Visualize answer provenance (which communities contributed to which Qs)
-
-## 15. Phase 10: Packaging, Documentation, and Next Steps (0.5–1 h)
-
-**README**
-
-Quickstart instructions
-
-Pipeline overview and architecture diagram
-
-List known issues and next steps
-
-**Docs**
-
-architecture.png: high-level flowchart
-
-evaluation.md: win-rate table, brief observations
-
-**Stretch/Future**
-
-DRIFT/local search mode
-
-Multi-level community hierarchy
-
-SQLite/Neo4j storage
-
-RL agent selection
-
-## 16. Time Estimates, Tips, and Pitfalls
-
-| Phase | Base Estimate | Common Pitfalls |
-|-------|---------------|-----------------|
-| Env & Data | 1 h | Chunk sizes too small/large—test first |
-| KG Build | 2.5 h | Extraction hallucination—QA 10 chunks first |
-| Communities | 1 h | Over-splitting—tune Leiden resolution |
-| Summaries | 1 h | LLM rate limits, summarization drift |
-| Vector RAG | 1 h | Embeddings mismatch, wrong model |
-| Global Search | 2 h | Map step OOM (reduce tokens or batch) |
-| Orchestrator | 1 h | Routing too brittle—tweak heuristics |
-| Eval | 2.5 h | LLM-judge variance, double-run edge cases |
-| Logging/Guard | 0.5 h | Missed moderation, keep checks simple |
-| Viz/Docs | 1 h | Time sink—deprioritize if under time |
 
 **Total Base: 10–11 h; Stretch/Future: up to 16 h.**
 

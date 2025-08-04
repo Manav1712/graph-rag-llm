@@ -1,0 +1,1624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Graph Visualization</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8f9fa;
+            overflow: hidden;
+        }
+        .container {
+            width: 100%;
+            height: 100vh;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+            margin-top: 0;
+        }
+        #graph {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            height: calc(100vh - 80px);
+        }
+        .node {
+            cursor: pointer;
+        }
+        .node:hover {
+            stroke-width: 3px;
+        }
+        .link {
+            stroke: #999;
+            stroke-opacity: 0.6;
+            cursor: pointer;
+            stroke-width: 3px;
+        }
+        .link:hover {
+            stroke-opacity: 1;
+            stroke-width: 5px;
+        }
+        .node-label {
+            font-size: 11px;
+            font-weight: 500;
+            pointer-events: none;
+        }
+        .tooltip {
+            position: absolute;
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-size: 12px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+            max-width: 300px;
+            z-index: 1000;
+        }
+        .relationship-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            z-index: 1001;
+            max-width: 400px;
+            display: none;
+        }
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            display: none;
+        }
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            cursor: pointer;
+            font-size: 20px;
+            color: #666;
+        }
+        .config-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1002;
+            max-width: 250px;
+            opacity: 0;
+            transform: translateX(20px);
+            transition: all 0.3s ease;
+        }
+        .config-panel.show {
+            opacity: 1;
+            transform: translateX(0);
+            z-index: 1005;
+        }
+        .data-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1002;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+            opacity: 0;
+            transform: translateX(20px);
+            transition: all 0.3s ease;
+        }
+        .data-panel.show {
+            opacity: 1;
+            transform: translateX(0);
+            z-index: 1003;
+        }
+        .search-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1002;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            opacity: 0;
+            transform: translateX(20px);
+            transition: all 0.3s ease;
+        }
+        .search-panel.show {
+            opacity: 1;
+            transform: translateX(0);
+            z-index: 1004;
+        }
+        .judge-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1002;
+            max-width: 700px;
+            max-height: 80vh;
+            overflow-y: auto;
+            opacity: 0;
+            transform: translateX(20px);
+            transition: all 0.3s ease;
+        }
+        .judge-panel.show {
+            opacity: 1;
+            transform: translateX(0);
+            z-index: 1005;
+        }
+        .data-section {
+            margin-bottom: 20px;
+        }
+        .data-section h4 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+        .data-content {
+            font-size: 12px;
+            color: #666;
+            line-height: 1.4;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            padding: 10px;
+            border-radius: 4px;
+            background: #f9f9f9;
+        }
+        .config-panel h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: #333;
+        }
+        .config-group {
+            margin-bottom: 15px;
+        }
+        .config-group label {
+            display: block;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .config-group select, .config-group input {
+            width: 100%;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+            transition: border-color 0.2s ease;
+        }
+        .config-group select:focus, .config-group input:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        .config-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            color: #333;
+            border: 1px solid #ddd;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            z-index: 1003;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .config-toggle:hover {
+            background: white;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-color: #007bff;
+        }
+        .config-toggle:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .back-button {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 0;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s ease;
+        }
+        .back-button:hover {
+            color: #333;
+        }
+        .info-toggle {
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            color: #333;
+            border: 1px solid #ddd;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            z-index: 1003;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .info-toggle:hover {
+            background: white;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-color: #007bff;
+        }
+        .info-toggle:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .data-toggle {
+            position: fixed;
+            top: 120px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            color: #333;
+            border: 1px solid #ddd;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            z-index: 1003;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .data-toggle:hover {
+            background: white;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-color: #007bff;
+        }
+        .data-toggle:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .search-toggle {
+            position: fixed;
+            top: 170px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            color: #333;
+            border: 1px solid #ddd;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            z-index: 1003;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .search-toggle:hover {
+            background: white;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-color: #007bff;
+        }
+        .search-toggle:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .judge-toggle {
+            position: fixed;
+            top: 220px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            color: #333;
+            border: 1px solid #ddd;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            z-index: 1003;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .judge-toggle:hover {
+            background: white;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-color: #007bff;
+        }
+        .judge-toggle:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .help-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            z-index: 1001;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            display: none;
+        }
+        .help-modal h2 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        .help-modal h3 {
+            color: #555;
+            margin-top: 25px;
+            margin-bottom: 10px;
+        }
+        .help-modal p {
+            line-height: 1.6;
+            color: #666;
+            margin-bottom: 15px;
+        }
+        .help-modal ul {
+            margin-bottom: 15px;
+        }
+        .help-modal li {
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+        .help-modal .example {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            border-left: 4px solid #007bff;
+        }
+        .help-modal .close-help {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 24px;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s ease;
+        }
+        .help-modal .close-help:hover {
+            color: #333;
+        }
+        .search-result {
+            margin-bottom: 25px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+        .search-result h4 {
+            margin: 0 0 10px 0;
+            color: #333;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .search-result .response {
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        .search-result .metadata {
+            font-size: 11px;
+            color: #888;
+            background: #f0f0f0;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .search-result .response h3 {
+            color: #007bff;
+            margin: 20px 0 10px 0;
+            font-size: 14px;
+        }
+        .search-result .response h4 {
+            color: #333;
+            margin: 15px 0 8px 0;
+            font-size: 13px;
+        }
+        .search-result .response ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .search-result .response li {
+            margin-bottom: 5px;
+            line-height: 1.5;
+        }
+        .judge-section {
+            margin-bottom: 25px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+        .judge-section h3 {
+            margin: 0 0 15px 0;
+            color: #333;
+            font-size: 18px;
+            font-weight: 600;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 8px;
+        }
+        .judge-section h4 {
+            margin: 15px 0 10px 0;
+            color: #555;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #007bff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        .evaluation-item {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 6px;
+            border-left: 4px solid #28a745;
+        }
+        .evaluation-item.score-high {
+            border-left-color: #28a745;
+        }
+        .evaluation-item.score-medium {
+            border-left-color: #ffc107;
+        }
+        .evaluation-item.score-low {
+            border-left-color: #dc3545;
+        }
+        .score-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+            margin-left: 10px;
+        }
+        .score-badge.high {
+            background: #28a745;
+        }
+        .score-badge.medium {
+            background: #ffc107;
+        }
+        .score-badge.low {
+            background: #dc3545;
+        }
+        .strength-item, .weakness-item, .suggestion-item {
+            margin: 8px 0;
+            padding: 8px 12px;
+            border-radius: 4px;
+        }
+        .strength-item {
+            background: #d4edda;
+            border-left: 3px solid #28a745;
+        }
+        .weakness-item {
+            background: #f8d7da;
+            border-left: 3px solid #dc3545;
+        }
+        .suggestion-item {
+            background: #d1ecf1;
+            border-left: 3px solid #17a2b8;
+        }
+        .recommendation-card {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 6px;
+            border-left: 4px solid #6c757d;
+        }
+        .recommendation-card.high-priority {
+            border-left-color: #dc3545;
+        }
+        .recommendation-card.medium-priority {
+            border-left-color: #ffc107;
+        }
+        .recommendation-card.low-priority {
+            border-left-color: #28a745;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Knowledge Graph</h1>
+        <div id="graph"></div>
+    </div>
+    <div class="tooltip" id="tooltip"></div>
+    <div class="modal-backdrop" id="modal-backdrop"></div>
+    
+    <button class="info-toggle" onclick="showHelp()">ℹ️ Help</button>
+    <button class="config-toggle" id="config-toggle" onclick="toggleConfig()">⚙️ Settings</button>
+    <button class="data-toggle" id="data-toggle" onclick="toggleData()">📊 Data</button>
+    <button class="search-toggle" id="search-toggle" onclick="toggleSearch()">🔍 Search Results</button>
+    <button class="judge-toggle" id="judge-toggle" onclick="toggleJudge()">⚖️ Judge Report</button>
+    <div class="config-panel" id="config-panel">
+        <button class="back-button" onclick="closeConfig()">×</button>
+        <h3>Graph Configuration</h3>
+        
+        <div class="config-group">
+            <label>Layout Style:</label>
+            <select id="layout-style" onchange="changeLayout()">
+                <option value="web">Web-like (Current)</option>
+                <option value="grid">Grid View</option>
+                <option value="spread">Spread Out</option>
+                <option value="circular">Circular</option>
+            </select>
+        </div>
+        
+        <div class="config-group">
+            <label>Node Size:</label>
+            <select id="node-size" onchange="changeNodeSize()">
+                <option value="degree">By Degree</option>
+                <option value="fixed">Fixed Size</option>
+            </select>
+        </div>
+        
+        <div class="config-group">
+            <label>Link Thickness:</label>
+            <select id="link-thickness" onchange="changeLinkThickness()">
+                <option value="weight">By Weight</option>
+                <option value="fixed">Fixed</option>
+            </select>
+        </div>
+        
+        <div class="config-group">
+            <label>Color Scheme:</label>
+            <select id="color-scheme" onchange="changeColorScheme()">
+                <option value="type">By Type</option>
+                <option value="degree">By Degree</option>
+            </select>
+        </div>
+        
+        <div class="config-group">
+            <label>Show Labels:</label>
+            <select id="show-labels" onchange="toggleLabels()">
+                <option value="all">All</option>
+                <option value="connected">Connected Only</option>
+                <option value="none">None</option>
+            </select>
+        </div>
+    </div>
+    
+    <div class="data-panel" id="data-panel">
+        <button class="back-button" onclick="closeData()">×</button>
+        <h3>Knowledge Graph Data</h3>
+        
+        <div class="data-section">
+            <h4>Community Reports</h4>
+            <div id="community-reports" class="data-content">
+                <p>Loading community reports...</p>
+            </div>
+        </div>
+        
+        <div class="data-section">
+            <h4>Entity Descriptions</h4>
+            <div id="entity-descriptions" class="data-content">
+                <p>Loading entity descriptions...</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="search-panel" id="search-panel">
+        <button class="back-button" onclick="closeSearch()">×</button>
+        <h3>Search Results</h3>
+        
+        <div id="search-results-content">
+            <p>Loading search results...</p>
+        </div>
+    </div>
+    
+    <div class="judge-panel" id="judge-panel">
+        <button class="back-button" onclick="closeJudge()">×</button>
+        <h3>LLM Judge Report</h3>
+        
+        <div id="judge-report-content">
+            <p>Loading judge report...</p>
+        </div>
+    </div>
+    
+    <div class="help-modal" id="help-modal">
+        <button class="close-help" onclick="closeHelp()">×</button>
+        <h2>Knowledge Graph Visualization Guide</h2>
+        
+        <h3>What is this?</h3>
+        <p>This is an interactive knowledge graph visualization showing relationships between entities extracted from your documents. The graph represents concepts, people, places, and events connected by their relationships.</p>
+        
+        <h3>Understanding the Visualization</h3>
+        
+        <h4>Nodes (Circles)</h4>
+        <ul>
+            <li><strong>Size:</strong> Larger nodes have more connections (higher degree)</li>
+            <li><strong>Color:</strong> Different colors represent different entity types:
+                <ul>
+                    <li><span style="color: #ff6b6b;">Red</span> - Events (actions, processes)</li>
+                    <li><span style="color: #4ecdc4;">Teal</span> - People (individuals, characters)</li>
+                    <li><span style="color: #45b7d1;">Blue</span> - Geographic locations (cities, places)</li>
+                    <li><span style="color: #96ceb4;">Green</span> - Organizations (companies, groups)</li>
+                    <li><span style="color: #feca57;">Yellow</span> - Other/Unknown types</li>
+                </ul>
+            </li>
+            <li><strong>Labels:</strong> Show the entity name next to each node</li>
+        </ul>
+        
+        <h4>Links (Lines)</h4>
+        <ul>
+            <li><strong>Thickness:</strong> Thicker lines indicate stronger relationships (higher weight)</li>
+            <li><strong>Color:</strong> Gray lines that become more opaque on hover</li>
+            <li><strong>Meaning:</strong> Each line represents a relationship between two entities</li>
+        </ul>
+        
+        <h3>Interactive Features</h3>
+        
+        <h4>Navigation</h4>
+        <ul>
+            <li><strong>Zoom:</strong> Scroll to zoom in/out</li>
+            <li><strong>Pan:</strong> Click and drag to move around the graph</li>
+            <li><strong>Drag Nodes:</strong> Click and drag individual nodes to reposition them</li>
+        </ul>
+        
+        <h4>Information Display</h4>
+        <ul>
+            <li><strong>Hover over nodes:</strong> See detailed information in a tooltip</li>
+            <li><strong>Click on links:</strong> View relationship details in a popup</li>
+            <li><strong>Settings panel:</strong> Customize the visualization appearance</li>
+        </ul>
+        
+        <h3>Configuration Options</h3>
+        
+        <h4>Layout Styles</h4>
+        <ul>
+            <li><strong>Web-like:</strong> Balanced spacing, natural clustering</li>
+            <li><strong>Compact:</strong> Nodes closer together, dense layout</li>
+            <li><strong>Spread Out:</strong> More space between nodes, easier to read</li>
+            <li><strong>Circular:</strong> Attempts to arrange nodes in a circle</li>
+        </ul>
+        
+        <h4>Visual Customization</h4>
+        <ul>
+            <li><strong>Node Size:</strong> Choose between degree-based or fixed size</li>
+            <li><strong>Link Thickness:</strong> Based on relationship weight or fixed</li>
+            <li><strong>Color Scheme:</strong> Color by entity type or degree</li>
+            <li><strong>Labels:</strong> Show all labels, only connected nodes, or none</li>
+        </ul>
+        
+        <h3>Data Interpretation</h3>
+        
+        <h4>What the Data Represents</h4>
+        <p>This knowledge graph was created from your document collection. The entities and relationships were automatically extracted using natural language processing techniques.</p>
+        
+        <div class="example">
+            <strong>Example:</strong> If you see a large red node labeled "VECTOR" connected to a smaller blue node "SCALAR PRODUCT" with a thick line, this indicates that "VECTOR" has many connections and a strong relationship with "SCALAR PRODUCT" in your documents.
+        </div>
+        
+        <h4>Understanding Metrics</h4>
+        <ul>
+            <li><strong>Degree:</strong> Number of connections a node has</li>
+            <li><strong>Weight:</strong> Strength of the relationship between entities</li>
+        </ul>
+        
+        <h3>Tips for Exploration</h3>
+        <ul>
+            <li>Start by looking for the largest nodes - these are your most important concepts</li>
+            <li>Follow thick lines to find the strongest relationships</li>
+            <li>Use the settings to adjust the view for different analysis needs</li>
+            <li>Try different color schemes to highlight different aspects of your data</li>
+            <li>Zoom in on dense areas to see individual relationships clearly</li>
+        </ul>
+    </div>
+    
+    <script>
+        // Set up the visualization - full page
+        const width = window.innerWidth - 40;
+        const height = window.innerHeight - 100;
+        
+        // Create SVG container
+        const svg = d3.select("#graph")
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height);
+        
+        // Add zoom behavior
+        const zoom = d3.zoom()
+            .on("zoom", (event) => {
+                svg.select("g").attr("transform", event.transform);
+            });
+        
+        svg.call(zoom);
+        
+        // Create main group for the graph
+        const g = svg.append("g");
+        
+        // Color scale for node types
+        const color = d3.scaleOrdinal()
+            .domain(["EVENT", "PERSON", "GEO", "ORGANIZATION", ""])
+            .range(["#ff6b6b", "#4ecdc4", "#45b7d1", "#96ceb4", "#feca57"]);
+        
+        // Load the data
+        d3.json("graph_data.json").then(function(graph) {
+            console.log("Loaded graph data:", graph);
+            console.log("Nodes:", graph.nodes.length);
+            console.log("Links:", graph.links.length);
+            
+            // Convert links to use node IDs instead of titles
+            const nodeMap = {};
+            graph.nodes.forEach(node => {
+                nodeMap[node.title] = node.id;
+            });
+            
+            // Update links to use IDs
+            graph.links.forEach(link => {
+                link.source = nodeMap[link.source] || link.source;
+                link.target = nodeMap[link.target] || link.target;
+            });
+            
+            // Create force simulation with closer nodes
+            const simulation = d3.forceSimulation(graph.nodes)
+                .force("link", d3.forceLink(graph.links).id(d => d.id).distance(50))
+                .force("charge", d3.forceManyBody().strength(-35))
+                .force("center", d3.forceCenter(width / 2, height / 2))
+                .force("collision", d3.forceCollide().radius(25));
+            
+            // Create links with thicker stroke for easier clicking
+            const link = g.append("g")
+                .selectAll("line")
+                .data(graph.links)
+                .enter().append("line")
+                .attr("class", "link")
+                .attr("stroke-width", d => Math.max(3, Math.sqrt(d.weight)))
+                .on("click", function(event, d) {
+                    // After simulation, source and target become objects, not IDs
+                    const sourceNode = d.source.id ? d.source : graph.nodes.find(n => n.id === d.source);
+                    const targetNode = d.target.id ? d.target : graph.nodes.find(n => n.id === d.target);
+                    
+                    showRelationshipModal(sourceNode, targetNode, d);
+                });
+            
+            // Create nodes
+            const node = g.append("g")
+                .selectAll("circle")
+                .data(graph.nodes)
+                .enter().append("circle")
+                .attr("class", "node")
+                .attr("r", d => Math.max(4, Math.min(12, d.degree * 1.5)))
+                .attr("fill", d => color(d.type))
+                .attr("stroke", "#fff")
+                .attr("stroke-width", 2);
+            
+            // Add labels
+            const label = g.append("g")
+                .selectAll("text")
+                .data(graph.nodes)
+                .enter().append("text")
+                .attr("class", "node-label")
+                .attr("dx", 10)
+                .attr("dy", ".35em")
+                .text(d => d.title);
+            
+            // Add tooltip
+            const tooltip = d3.select("#tooltip");
+            
+            node.on("mouseover", function(event, d) {
+                tooltip.transition()
+                    .duration(200)
+                    .style("opacity", .9);
+                tooltip.html(`
+                    <strong>${d.title}</strong><br/>
+                    Type: ${d.type || 'Unknown'}<br/>
+                    Degree: ${d.degree}
+                `)
+                    .style("left", (event.pageX + 10) + "px")
+                    .style("top", (event.pageY - 10) + "px");
+            })
+            .on("mouseout", function(d) {
+                tooltip.transition()
+                    .duration(500)
+                    .style("opacity", 0);
+            });
+            
+            // Update positions on simulation tick
+            simulation.on("tick", () => {
+                link
+                    .attr("x1", d => d.source.x)
+                    .attr("y1", d => d.source.y)
+                    .attr("x2", d => d.target.x)
+                    .attr("y2", d => d.target.y);
+                
+                node
+                    .attr("cx", d => d.x)
+                    .attr("cy", d => d.y);
+                
+                label
+                    .attr("x", d => d.x)
+                    .attr("y", d => d.y);
+            });
+            
+            // Add drag behavior
+            node.call(d3.drag()
+                .on("start", dragstarted)
+                .on("drag", dragged)
+                .on("end", dragended));
+            
+            function dragstarted(event, d) {
+                if (!event.active) simulation.alphaTarget(0.3).restart();
+                d.fx = d.x;
+                d.fy = d.y;
+            }
+            
+            function dragged(event, d) {
+                d.fx = event.x;
+                d.fy = event.y;
+            }
+            
+            function dragended(event, d) {
+                if (!event.active) simulation.alphaTarget(0);
+                d.fx = null;
+                d.fy = null;
+            }
+            
+            // Function to show relationship modal
+            function showRelationshipModal(sourceNode, targetNode, link) {
+                // Create modal if it doesn't exist
+                let modal = document.getElementById('relationship-modal');
+                if (!modal) {
+                    modal = document.createElement('div');
+                    modal.id = 'relationship-modal';
+                    modal.innerHTML = `
+                        <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;" onclick="closeRelationshipModal()"></div>
+                        <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); z-index: 1001; max-width: 400px; width: 90%;">
+                            <span style="position: absolute; top: 10px; right: 15px; cursor: pointer; font-size: 20px; color: #666;" onclick="closeRelationshipModal()">&times;</span>
+                            <h3 id="modal-title" style="margin-top: 0; color: #333;"></h3>
+                            <p id="modal-description" style="color: #666; line-height: 1.4;"></p>
+                            <div id="modal-details" style="font-size: 14px; color: #888;"></div>
+                        </div>
+                    `;
+                    document.body.appendChild(modal);
+                }
+                
+                // Update modal content
+                document.getElementById('modal-title').textContent = `${sourceNode.title} → ${targetNode.title}`;
+                document.getElementById('modal-description').textContent = link.description || 'No description available';
+                document.getElementById('modal-details').innerHTML = `
+                    <p><strong>Weight:</strong> ${link.weight}</p>
+                    <p><strong>Source Type:</strong> ${sourceNode.type || 'Unknown'}</p>
+                    <p><strong>Target Type:</strong> ${targetNode.type || 'Unknown'}</p>
+                `;
+                
+                modal.style.display = 'block';
+            }
+            
+
+            
+            // Function to close modal
+            window.closeRelationshipModal = function() {
+                const modal = document.getElementById('relationship-modal');
+                if (modal) {
+                    modal.style.display = 'none';
+                }
+            };
+            
+            // Configuration functions
+            window.toggleConfig = function() {
+                const panel = document.getElementById('config-panel');
+                const toggle = document.getElementById('config-toggle');
+                const helpToggle = document.querySelector('.info-toggle');
+                const dataToggle = document.querySelector('.data-toggle');
+                const searchToggle = document.querySelector('.search-toggle');
+                const judgeToggle = document.querySelector('.judge-toggle');
+                const isOpen = panel.classList.contains('show');
+                
+                if (isOpen) {
+                    panel.classList.remove('show');
+                    toggle.style.display = 'block';
+                    helpToggle.style.display = 'block';
+                    dataToggle.style.display = 'block';
+                    searchToggle.style.display = 'block';
+                    judgeToggle.style.display = 'block';
+                } else {
+                    panel.classList.add('show');
+                    toggle.style.display = 'none';
+                    helpToggle.style.display = 'none';
+                    dataToggle.style.display = 'none';
+                    searchToggle.style.display = 'none';
+                    judgeToggle.style.display = 'none';
+                }
+            };
+            
+            window.closeConfig = function() {
+                const panel = document.getElementById('config-panel');
+                const toggle = document.getElementById('config-toggle');
+                const helpToggle = document.querySelector('.info-toggle');
+                const dataToggle = document.querySelector('.data-toggle');
+                const searchToggle = document.querySelector('.search-toggle');
+                const judgeToggle = document.querySelector('.judge-toggle');
+                panel.classList.remove('show');
+                toggle.style.display = 'block';
+                helpToggle.style.display = 'block';
+                dataToggle.style.display = 'block';
+                searchToggle.style.display = 'block';
+                judgeToggle.style.display = 'block';
+            };
+            
+            // Data panel functions
+            window.toggleData = function() {
+                const panel = document.getElementById('data-panel');
+                const toggle = document.getElementById('data-toggle');
+                const helpToggle = document.querySelector('.info-toggle');
+                const configToggle = document.getElementById('config-toggle');
+                const searchToggle = document.querySelector('.search-toggle');
+                const judgeToggle = document.querySelector('.judge-toggle');
+                const isOpen = panel.classList.contains('show');
+                
+                if (isOpen) {
+                    panel.classList.remove('show');
+                    toggle.style.display = 'block';
+                    helpToggle.style.display = 'block';
+                    configToggle.style.display = 'block';
+                    searchToggle.style.display = 'block';
+                    judgeToggle.style.display = 'block';
+                } else {
+                    panel.classList.add('show');
+                    toggle.style.display = 'none';
+                    helpToggle.style.display = 'none';
+                    configToggle.style.display = 'none';
+                    searchToggle.style.display = 'none';
+                    judgeToggle.style.display = 'none';
+                    loadDataContent();
+                }
+            };
+            
+            window.closeData = function() {
+                const panel = document.getElementById('data-panel');
+                const toggle = document.getElementById('data-toggle');
+                const helpToggle = document.querySelector('.info-toggle');
+                const configToggle = document.getElementById('config-toggle');
+                const searchToggle = document.querySelector('.search-toggle');
+                const judgeToggle = document.querySelector('.judge-toggle');
+                panel.classList.remove('show');
+                toggle.style.display = 'block';
+                helpToggle.style.display = 'block';
+                configToggle.style.display = 'block';
+                searchToggle.style.display = 'block';
+                judgeToggle.style.display = 'block';
+            };
+            
+            // Search panel functions
+            window.toggleSearch = function() {
+                const panel = document.getElementById('search-panel');
+                const toggle = document.getElementById('search-toggle');
+                const helpToggle = document.querySelector('.info-toggle');
+                const configToggle = document.getElementById('config-toggle');
+                const dataToggle = document.querySelector('.data-toggle');
+                const judgeToggle = document.querySelector('.judge-toggle');
+                const isOpen = panel.classList.contains('show');
+                
+                if (isOpen) {
+                    panel.classList.remove('show');
+                    toggle.style.display = 'block';
+                    helpToggle.style.display = 'block';
+                    configToggle.style.display = 'block';
+                    dataToggle.style.display = 'block';
+                    judgeToggle.style.display = 'block';
+                } else {
+                    panel.classList.add('show');
+                    toggle.style.display = 'none';
+                    helpToggle.style.display = 'none';
+                    configToggle.style.display = 'none';
+                    dataToggle.style.display = 'none';
+                    judgeToggle.style.display = 'none';
+                    loadSearchResults();
+                }
+            };
+            
+            window.closeSearch = function() {
+                const panel = document.getElementById('search-panel');
+                const toggle = document.getElementById('search-toggle');
+                const helpToggle = document.querySelector('.info-toggle');
+                const configToggle = document.getElementById('config-toggle');
+                const dataToggle = document.querySelector('.data-toggle');
+                const judgeToggle = document.querySelector('.judge-toggle');
+                panel.classList.remove('show');
+                toggle.style.display = 'block';
+                helpToggle.style.display = 'block';
+                configToggle.style.display = 'block';
+                dataToggle.style.display = 'block';
+                judgeToggle.style.display = 'block';
+            };
+            
+            // Judge panel functions
+            window.toggleJudge = function() {
+                const panel = document.getElementById('judge-panel');
+                const toggle = document.getElementById('judge-toggle');
+                const helpToggle = document.querySelector('.info-toggle');
+                const configToggle = document.getElementById('config-toggle');
+                const dataToggle = document.querySelector('.data-toggle');
+                const searchToggle = document.querySelector('.search-toggle');
+                const isOpen = panel.classList.contains('show');
+                
+                if (isOpen) {
+                    panel.classList.remove('show');
+                    toggle.style.display = 'block';
+                    helpToggle.style.display = 'block';
+                    configToggle.style.display = 'block';
+                    dataToggle.style.display = 'block';
+                    searchToggle.style.display = 'block';
+                } else {
+                    panel.classList.add('show');
+                    toggle.style.display = 'none';
+                    helpToggle.style.display = 'none';
+                    configToggle.style.display = 'none';
+                    dataToggle.style.display = 'none';
+                    searchToggle.style.display = 'none';
+                    loadJudgeReport();
+                }
+            };
+            
+            window.closeJudge = function() {
+                const panel = document.getElementById('judge-panel');
+                const toggle = document.getElementById('judge-toggle');
+                const helpToggle = document.querySelector('.info-toggle');
+                const configToggle = document.getElementById('config-toggle');
+                const dataToggle = document.querySelector('.data-toggle');
+                const searchToggle = document.querySelector('.search-toggle');
+                panel.classList.remove('show');
+                toggle.style.display = 'block';
+                helpToggle.style.display = 'block';
+                configToggle.style.display = 'block';
+                dataToggle.style.display = 'block';
+                searchToggle.style.display = 'block';
+            };
+            
+            // Function to load data content
+            function loadDataContent() {
+                // Load community reports
+                fetch('community_reports_output.json')
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Loaded community reports:', data);
+                        const reportCount = data.length;
+                        let html = `<p><strong>${reportCount} Community Reports Available</strong></p>`;
+                        
+                        data.forEach((report, index) => {
+                            const reportId = `report-${index}`;
+                            const fullContentId = `full-content-${index}`;
+                            
+                            html += `<div style="margin: 8px 0; padding: 8px; background: white; border-radius: 4px; border-left: 3px solid #007bff;">`;
+                            html += `<strong style="color: #007bff;">${report.title}</strong><br>`;
+                            html += `<span style="font-size: 11px; color: #888;">Community ${report.human_readable_id}</span><br><br>`;
+                            html += `<div style="color: #666; line-height: 1.4; margin-bottom: 8px;">${report.summary}</div>`;
+                            html += `<button onclick="toggleFullReport('${fullContentId}')" style="background: #007bff; color: white; border: none; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer;">Show Full Report</button>`;
+                            html += `<div id="${fullContentId}" style="display: none; margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 4px; font-size: 12px; line-height: 1.4; max-height: 300px; overflow-y: auto;">${report.full_content.replace(/\n/g, '<br>')}</div>`;
+                            html += `</div>`;
+                        });
+                        
+                        document.getElementById('community-reports').innerHTML = html;
+                    })
+                    .catch(error => {
+                        console.error('Error loading community reports:', error);
+                        document.getElementById('community-reports').innerHTML = 
+                            `<p style="color: #999;">Community reports not available: ${error.message}</p>`;
+                    });
+                
+                // Load entity descriptions
+                fetch('entities_output.json')
+                    .then(response => {
+                        console.log('Fetch response:', response);
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Loaded entity data:', data);
+                        const entityCount = data.length;
+                        let html = `<p><strong>${entityCount} Entity Descriptions Available</strong></p>`;
+                        html += '<p><strong>All Entities:</strong></p>';
+                        
+                        data.forEach(entity => {
+                            console.log('Processing entity:', entity);
+                            const entityName = entity.entity_name || 'Unknown Entity';
+                            const description = entity.description.substring(0, 120) + (entity.description.length > 120 ? '...' : '');
+                            
+                            html += `<div style="margin: 8px 0; padding: 8px; background: white; border-radius: 4px;">`;
+                            html += `<strong>Name:</strong> ${entityName}<br>`;
+                            html += `<strong>Description:</strong> ${description}`;
+                            html += `</div>`;
+                        });
+                        
+                        document.getElementById('entity-descriptions').innerHTML = html;
+                    })
+                    .catch(error => {
+                        console.error('Error loading entity descriptions:', error);
+                        document.getElementById('entity-descriptions').innerHTML = 
+                            `<p style="color: #999;">Entity descriptions not available: ${error.message}</p>`;
+                    });
+            }
+            
+            // Function to load search results
+            function loadSearchResults() {
+                fetch('cleaned_search_results.txt')
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.text();
+                    })
+                    .then(data => {
+                        console.log('Loaded search results:', data);
+                        const parsedResults = parseSearchResults(data);
+                        displaySearchResults(parsedResults);
+                    })
+                    .catch(error => {
+                        console.error('Error loading search results:', error);
+                        document.getElementById('search-results-content').innerHTML = 
+                            `<p style="color: #999;">Search results not available: ${error.message}</p>`;
+                    });
+            }
+            
+            // Function to parse search results text
+            function parseSearchResults(text) {
+                const results = [];
+                const sections = text.split('============================================================');
+                
+                sections.forEach(section => {
+                    const trimmed = section.trim();
+                    if (!trimmed || trimmed === '=== Testing Drift Search ===') return;
+                    
+                    const lines = trimmed.split('\n');
+                    let query = '';
+                    let response = '';
+                    let metadata = '';
+                    let isResponse = false;
+                    let isMetadata = false;
+                    
+                    lines.forEach(line => {
+                        const trimmedLine = line.trim();
+                        
+                        if (trimmedLine.startsWith('Query ')) {
+                            query = trimmedLine;
+                        } else if (trimmedLine === '--------------------------------------------------') {
+                            // Skip separator
+                        } else if (trimmedLine.startsWith('Response:')) {
+                            isResponse = true;
+                            response = trimmedLine.substring(9).trim();
+                        } else if (trimmedLine.startsWith('Metadata:')) {
+                            isMetadata = true;
+                            isResponse = false;
+                            metadata = trimmedLine.substring(9).trim();
+                        } else if (isMetadata) {
+                            metadata += ' ' + trimmedLine;
+                        } else if (isResponse && trimmedLine) {
+                            response += '\n' + trimmedLine;
+                        }
+                    });
+                    
+                    if (query && response) {
+                        results.push({
+                            query: query,
+                            response: response.trim(),
+                            metadata: metadata.trim()
+                        });
+                    }
+                });
+                
+                return results;
+            }
+            
+            // Function to display search results
+            function displaySearchResults(results) {
+                let html = `<p><strong>${results.length} Search Results Available</strong></p>`;
+                
+                results.forEach((result, index) => {
+                    // Format the response text with HTML
+                    let formattedResponse = result.response
+                        .replace(/### (.*?)$/gm, '<h3>$1</h3>')
+                        .replace(/#### (.*?)$/gm, '<h4>$1</h4>')
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/- \*\*(.*?)\*\*:/g, '<li><strong>$1:</strong>')
+                        .replace(/^- (.*?)$/gm, '<li>$1</li>')
+                        .replace(/\n\n/g, '</p><p>')
+                        .replace(/\[Data: (.*?)\]/g, '<em style="color: #007bff;">[$1]</em>');
+                    
+                    // Wrap in paragraphs if not already wrapped
+                    if (!formattedResponse.includes('<p>')) {
+                        formattedResponse = '<p>' + formattedResponse + '</p>';
+                    }
+                    
+                    html += `<div class="search-result">`;
+                    html += `<h4>${result.query}</h4>`;
+                    html += `<div class="response">${formattedResponse}</div>`;
+                    html += `<div class="metadata">${result.metadata}</div>`;
+                    html += `</div>`;
+                });
+                
+                document.getElementById('search-results-content').innerHTML = html;
+            }
+            
+            // Function to load judge report
+            function loadJudgeReport() {
+                fetch('llm_judge_report.json')
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Loaded judge report:', data);
+                        displayJudgeReport(data);
+                    })
+                    .catch(error => {
+                        console.error('Error loading judge report:', error);
+                        document.getElementById('judge-report-content').innerHTML = 
+                            `<p style="color: #999;">Judge report not available: ${error.message}</p>`;
+                    });
+            }
+            
+            // Function to display judge report
+            function displayJudgeReport(report) {
+                const getScoreClass = (score) => {
+                    if (score >= 8) return 'high';
+                    if (score >= 6) return 'medium';
+                    return 'low';
+                };
+                
+                const getScoreBadge = (score) => {
+                    const className = getScoreClass(score);
+                    return `<span class="score-badge ${className}">${score}/10</span>`;
+                };
+                
+                let html = '';
+                
+                // Executive Summary
+                html += `<div class="judge-section">`;
+                html += `<h3>Executive Summary</h3>`;
+                html += `<div class="summary-stats">`;
+                html += `<div class="stat-card"><div class="stat-value">${report.summary.total_evaluations}</div><div class="stat-label">Total Evaluations</div></div>`;
+                html += `<div class="stat-card"><div class="stat-value">${report.summary.average_score}</div><div class="stat-label">Average Score</div></div>`;
+                html += `<div class="stat-card"><div class="stat-value">${report.summary.min_score} - ${report.summary.max_score}</div><div class="stat-label">Score Range</div></div>`;
+                html += `</div>`;
+                html += `<p><strong>Overall Assessment:</strong> ${report.executive_summary.overall_assessment}</p>`;
+                
+                // Key Strengths
+                html += `<h4>Key Strengths</h4>`;
+                report.executive_summary.key_strengths.forEach(strength => {
+                    html += `<div class="strength-item">${strength}</div>`;
+                });
+                
+                // Areas for Improvement
+                html += `<h4>Areas for Improvement</h4>`;
+                report.executive_summary.areas_for_improvement.forEach(area => {
+                    html += `<div class="weakness-item">${area}</div>`;
+                });
+                html += `</div>`;
+                
+                // Quality Metrics
+                html += `<div class="judge-section">`;
+                html += `<h3>Quality Metrics</h3>`;
+                html += `<div class="summary-stats">`;
+                Object.entries(report.quality_metrics).forEach(([key, value]) => {
+                    const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    html += `<div class="stat-card"><div class="stat-value">${value}</div><div class="stat-label">${label}</div></div>`;
+                });
+                html += `</div>`;
+                html += `</div>`;
+                
+                // Community Reports
+                if (report.detailed_evaluations.community_reports) {
+                    html += `<div class="judge-section">`;
+                    html += `<h3>Community Reports Evaluation</h3>`;
+                    report.detailed_evaluations.community_reports.forEach(item => {
+                        const scoreClass = getScoreClass(item.evaluation.score);
+                        html += `<div class="evaluation-item score-${scoreClass}">`;
+                        html += `<h4>${item.report_title} ${getScoreBadge(item.evaluation.score)}</h4>`;
+                        html += `<p><strong>Reasoning:</strong> ${item.evaluation.reasoning}</p>`;
+                        
+                        if (item.evaluation.strengths?.length) {
+                            html += `<p><strong>Strengths:</strong></p>`;
+                            item.evaluation.strengths.forEach(strength => {
+                                html += `<div class="strength-item">${strength}</div>`;
+                            });
+                        }
+                        
+                        if (item.evaluation.weaknesses?.length) {
+                            html += `<p><strong>Weaknesses:</strong></p>`;
+                            item.evaluation.weaknesses.forEach(weakness => {
+                                html += `<div class="weakness-item">${weakness}</div>`;
+                            });
+                        }
+                        
+                        if (item.evaluation.suggestions) {
+                            html += `<div class="suggestion-item"><strong>Suggestions:</strong> ${item.evaluation.suggestions}</div>`;
+                        }
+                        
+                        html += `</div>`;
+                    });
+                    html += `</div>`;
+                }
+                
+                // Relationship Evaluations (first 5)
+                if (report.detailed_evaluations.relationship_evaluations) {
+                    html += `<div class="judge-section">`;
+                    html += `<h3>Relationship Evaluations (Sample)</h3>`;
+                    report.detailed_evaluations.relationship_evaluations.slice(0, 5).forEach(item => {
+                        const scoreClass = getScoreClass(item.evaluation.score);
+                        html += `<div class="evaluation-item score-${scoreClass}">`;
+                        html += `<h4>${item.entity1} ↔ ${item.entity2} ${getScoreBadge(item.evaluation.score)}</h4>`;
+                        html += `<p><strong>Relationship:</strong> ${item.relationship}</p>`;
+                        html += `<p><strong>Reasoning:</strong> ${item.evaluation.reasoning}</p>`;
+                        if (item.evaluation.suggestions) {
+                            html += `<div class="suggestion-item"><strong>Suggestions:</strong> ${item.evaluation.suggestions}</div>`;
+                        }
+                        html += `</div>`;
+                    });
+                    html += `</div>`;
+                }
+                
+                // Entity Quality Assessment (first 5)
+                if (report.detailed_evaluations.entity_quality_assessment) {
+                    html += `<div class="judge-section">`;
+                    html += `<h3>Entity Quality Assessment (Sample)</h3>`;
+                    report.detailed_evaluations.entity_quality_assessment.slice(0, 5).forEach(item => {
+                        const scoreClass = getScoreClass(item.evaluation.score);
+                        html += `<div class="evaluation-item score-${scoreClass}">`;
+                        html += `<h4>${item.entity_name} ${getScoreBadge(item.evaluation.score)}</h4>`;
+                        html += `<p><strong>Description:</strong> ${item.description}</p>`;
+                        html += `<p><strong>Reasoning:</strong> ${item.evaluation.reasoning}</p>`;
+                        if (item.evaluation.suggestions) {
+                            html += `<div class="suggestion-item"><strong>Suggestions:</strong> ${item.evaluation.suggestions}</div>`;
+                        }
+                        html += `</div>`;
+                    });
+                    html += `</div>`;
+                }
+                
+                // Recommendations
+                html += `<div class="judge-section">`;
+                html += `<h3>Recommendations</h3>`;
+                
+                ['high_priority', 'medium_priority', 'low_priority'].forEach(priority => {
+                    if (report.recommendations[priority]) {
+                        const priorityLabel = priority.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+                        html += `<h4>${priorityLabel}</h4>`;
+                        report.recommendations[priority].forEach(rec => {
+                            html += `<div class="recommendation-card ${priority.replace('_', '-')}">`;
+                            html += `<h4>${rec.issue}</h4>`;
+                            html += `<p>${rec.description}</p>`;
+                            if (rec.action_items?.length) {
+                                html += `<p><strong>Action Items:</strong></p><ul>`;
+                                rec.action_items.forEach(item => {
+                                    html += `<li>${item}</li>`;
+                                });
+                                html += `</ul>`;
+                            }
+                            html += `<p><strong>Expected Impact:</strong> ${rec.expected_impact}</p>`;
+                            html += `</div>`;
+                        });
+                    }
+                });
+                html += `</div>`;
+                
+                document.getElementById('judge-report-content').innerHTML = html;
+            }
+            
+            window.changeLayout = function() {
+                const style = document.getElementById('layout-style').value;
+                
+                switch(style) {
+                    case 'grid':
+                        // Arrange nodes in a grid pattern
+                        const gridSize = Math.ceil(Math.sqrt(graph.nodes.length));
+                        const cellWidth = width / gridSize;
+                        const cellHeight = height / gridSize;
+                        
+                        graph.nodes.forEach((node, i) => {
+                            const row = Math.floor(i / gridSize);
+                            const col = i % gridSize;
+                            node.fx = col * cellWidth + cellWidth / 2;
+                            node.fy = row * cellHeight + cellHeight / 2;
+                        });
+                        
+                        simulation.force("link").distance(Math.min(cellWidth, cellHeight) * 0.8);
+                        simulation.force("charge").strength(-50);
+                        break;
+                    case 'spread':
+                        // Reset fixed positions for spread layout
+                        graph.nodes.forEach(node => {
+                            node.fx = null;
+                            node.fy = null;
+                        });
+                        simulation.force("link").distance(100);
+                        simulation.force("charge").strength(-400);
+                        break;
+                    case 'circular':
+                        // Reset fixed positions for circular layout
+                        graph.nodes.forEach(node => {
+                            node.fx = null;
+                            node.fy = null;
+                        });
+                        simulation.force("link").distance(80);
+                        simulation.force("charge").strength(-200);
+                        // Add circular force
+                        simulation.force("x", d3.forceX(width/2).strength(0.1));
+                        simulation.force("y", d3.forceY(height/2).strength(0.1));
+                        break;
+                    default: // web-like
+                        // Reset fixed positions for natural layout
+                        graph.nodes.forEach(node => {
+                            node.fx = null;
+                            node.fy = null;
+                        });
+                        simulation.force("link").distance(50);
+                        simulation.force("charge").strength(-35);
+                        simulation.force("x", null);
+                        simulation.force("y", null);
+                        break;
+                }
+                simulation.alpha(0.3).restart();
+            };
+            
+            window.changeNodeSize = function() {
+                const sizeType = document.getElementById('node-size').value;
+                node.attr("r", d => {
+                    switch(sizeType) {
+                        case 'fixed':
+                            return 8;
+                        default: // degree
+                            return Math.max(4, Math.min(12, d.degree * 1.5));
+                    }
+                });
+            };
+            
+            window.changeLinkThickness = function() {
+                const thicknessType = document.getElementById('link-thickness').value;
+                link.attr("stroke-width", d => {
+                    switch(thicknessType) {
+                        case 'fixed':
+                            return 3;
+                        default: // weight
+                            return Math.max(3, Math.sqrt(d.weight));
+                    }
+                });
+            };
+            
+            window.changeColorScheme = function() {
+                const scheme = document.getElementById('color-scheme').value;
+                let colorScale;
+                
+                switch(scheme) {
+                    case 'degree':
+                        const maxDegree = d3.max(graph.nodes, d => d.degree);
+                        colorScale = d3.scaleSequential(d3.interpolateViridis).domain([0, maxDegree]);
+                        break;
+                    default: // type
+                        colorScale = color;
+                        break;
+                }
+                
+                node.attr("fill", d => colorScale(d[scheme === 'type' ? 'type' : scheme]));
+            };
+            
+            window.toggleLabels = function() {
+                const labelType = document.getElementById('show-labels').value;
+                label.style("opacity", d => {
+                    switch(labelType) {
+                        case 'connected':
+                            return d.degree > 0 ? 1 : 0;
+                        case 'none':
+                            return 0;
+                        default: // all
+                            return 1;
+                    }
+                });
+            };
+            
+            // Help functions
+            window.showHelp = function() {
+                document.getElementById('help-modal').style.display = 'block';
+            };
+            
+            window.closeHelp = function() {
+                document.getElementById('help-modal').style.display = 'none';
+            };
+            
+            // Function to toggle full report visibility
+            window.toggleFullReport = function(contentId) {
+                const content = document.getElementById(contentId);
+                const button = content.previousElementSibling;
+                
+                if (content.style.display === 'none') {
+                    content.style.display = 'block';
+                    button.textContent = 'Hide Full Report';
+                    button.style.background = '#6c757d';
+                } else {
+                    content.style.display = 'none';
+                    button.textContent = 'Show Full Report';
+                    button.style.background = '#007bff';
+                }
+            };
+        });
+    </script>
+</body>
+</html>

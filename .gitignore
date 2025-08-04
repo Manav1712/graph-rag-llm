@@ -204,3 +204,22 @@ data/communities/summaries/
 data/kg/graphs/
 *.graphml
 *.gml
+
+# Large output files (keep locally but don't commit)
+cleaned_search_results.txt
+llm_judge_report.json
+community_reports_output.json
+entities_output.json
+graph_data.json
+
+# GraphRAG workspace output files
+graphrag_workspace/output/*.parquet
+graphrag_workspace/output/lancedb/
+graphrag_workspace/cache/
+graphrag_workspace/logs/
+graphrag_workspace/input/input.txt
+
+# Large data files
+data/raw/*.pdf
+data/vector_db/
+data/chunks/*.parquet
